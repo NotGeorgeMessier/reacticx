@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.20.0](https://github.com/rit3zh/glow-ui/compare/v1.14.1...v1.20.0) (2025-07-21)
+
+
+### Features
+
+* **calendar:** 🎉 add new Calendar component ([ede639d](https://github.com/rit3zh/glow-ui/commit/ede639df93aa0bc8b52d1a8a2271e376a45a7f76))
+* **calendar:** 🎉 add new Calendar component ([5e381c7](https://github.com/rit3zh/glow-ui/commit/5e381c71f04f7eb81a638904f5d71bc681a8e9df))
+* **calendar:** 🎉 add new Calendar component ([e6b79fd](https://github.com/rit3zh/glow-ui/commit/e6b79fd2eafae41446b09d8d2d846610b211983a))
+* **calendar:** 🎉 add new Calendar component ([561d13e](https://github.com/rit3zh/glow-ui/commit/561d13e4f19be9f59b813951b43f8ed987eaba7c))
+
+
+### Bug Fixes
+
+* rename 'docs-webste' folder to 'docs-website' ([ff13153](https://github.com/rit3zh/glow-ui/commit/ff13153653e7ef5932b8893d545b4bd442eb99a8))
+
 ## [1.18.0](https://github.com/rit3zh/glow-ui/compare/v1.16.0...v1.18.0) (2025-07-21)
 
 
