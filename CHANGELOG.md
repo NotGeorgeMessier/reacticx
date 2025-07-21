@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.18.0](https://github.com/rit3zh/glow-ui/compare/v1.16.0...v1.18.0) (2025-07-21)
+
+
+### Features
+
+* **calendar:** 🎉 add new Calendar component ([49f53c4](https://github.com/rit3zh/glow-ui/commit/49f53c405ebf47059db81aba99627280b13dae78))
+
 ## [1.16.0](https://github.com/rit3zh/glow-ui/compare/v1.14.1...v1.16.0) (2025-07-21)
 
 
