@@ -1,6 +1,6 @@
 {
   "name": "rn-glow",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "✨ Add UI components to your project with style",
   "main": "dist/index.js",
   "repository": {

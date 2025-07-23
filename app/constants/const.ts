@@ -31,6 +31,11 @@ export const COMPONENTS: IScreenComponents[] = [
     path: "components/accordion",
   },
   {
+    title: "Otp Input",
+    icon: "lock.open",
+    path: "components/otp-input",
+  },
+  {
     title: "Badge",
     icon: "app.badge",
     path: "components/badge",
