@@ -143,28 +143,31 @@ const TriplePhoneHero: React.FC<TriplePhoneHeroProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, {
     once: true,
-    margin: "-20% 0px -20% 0px",
+    margin: "-10% 0px -10% 0px",
   });
 
   const common = { duration: 1.2, ease: [0.4, 0, 0.2, 1] };
 
+  // Use fixed pixel values instead of percentages for more predictable mobile behavior
   const centerVariant = {
-    hidden: { opacity: 0, y: "60%", scale: 0.85 },
+    hidden: { opacity: 0, y: 80, scale: 0.85 },
     visible: {
       opacity: 1,
-      y: "15%",
+      y: 0,
       scale: 1,
       transition: { ...common },
     },
   };
+
   const side = (dir: "left" | "right") => ({
-    hidden: { opacity: 0, y: "65%", x: "0%", rotate: 0, scale: 0.85 },
+    hidden: { opacity: 0, y: 100, x: 0, rotate: 0, scale: 0.85 },
     visible: {
-      opacity: 0.8,
-      y: "25%",
-      x: dir === "left" ? "-50%" : "50%",
-      rotate: dir === "left" ? -10 : 10,
-      scale: 1,
+      opacity: 0.85,
+      y: 20,
+      // Use smaller x offset on mobile for better fit
+      x: dir === "left" ? "-35%" : "35%",
+      rotate: dir === "left" ? -8 : 8,
+      scale: 0.95,
       transition: { ...common, delay: 0.15 },
     },
   });
@@ -173,19 +176,19 @@ const TriplePhoneHero: React.FC<TriplePhoneHeroProps> = ({
     <div
       ref={containerRef}
       className={cn(
-        "relative flex w-full items-center justify-center",
-        // Responsive min-height
-        "min-h-[350px] sm:min-h-[450px] md:min-h-[550px] lg:min-h-[650px]",
+        "relative flex w-full items-center justify-center overflow-visible",
+        // Increased min-height for mobile to prevent clipping
+        "min-h-[420px] sm:min-h-[500px] md:min-h-[580px] lg:min-h-[680px]",
         className,
       )}
     >
-      <div className="relative flex h-full w-full max-w-4xl items-center justify-center">
+      <div className="relative flex h-full w-full max-w-4xl items-center justify-center px-4 sm:px-6">
         {/* left phone */}
         <motion.div
           variants={side("left") as any}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
-          className="absolute z-10 w-[140px] sm:w-[180px] md:w-[260px] lg:w-[320px]"
+          className="absolute z-10 w-[120px] sm:w-[160px] md:w-[240px] lg:w-[300px]"
         >
           <Iphone15Pro src={imageLeftSrc} alt={imageLeftAlt} />
         </motion.div>
@@ -195,7 +198,7 @@ const TriplePhoneHero: React.FC<TriplePhoneHeroProps> = ({
           variants={centerVariant as any}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
-          className="relative z-20 w-[160px] sm:w-[200px] md:w-[280px] lg:w-[340px]"
+          className="relative z-20 w-[150px] sm:w-[190px] md:w-[270px] lg:w-[330px]"
         >
           <Iphone15Pro src={imageCenterSrc} alt={imageCenterAlt} />
         </motion.div>
@@ -205,7 +208,7 @@ const TriplePhoneHero: React.FC<TriplePhoneHeroProps> = ({
           variants={side("right") as any}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
-          className="absolute z-10 w-[140px] sm:w-[180px] md:w-[260px] lg:w-[320px]"
+          className="absolute z-10 w-[120px] sm:w-[160px] md:w-[240px] lg:w-[300px]"
         >
           <Iphone15Pro src={imageRightSrc} alt={imageRightAlt} />
         </motion.div>
