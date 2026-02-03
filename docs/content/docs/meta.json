@@ -11,6 +11,7 @@
     "components/energy-orb",
     "components/siri-orb",
     "components/skia-ripple",
+    "components/liquid-metal",
     "components/wave-scrawler",
 
     "---Texts---",
@@ -70,7 +71,6 @@
     "components/glow",
     "components/infinite-menu",
     "components/lanyard",
-    "components/liquid-glass-card",
     "components/loader",
     "components/marquee",
     "components/material-carousel",
