@@ -57,12 +57,11 @@ export async function add<T extends string>(
 
     await validateOrCreateOutDir(outDir);
 
-    const componentDir = path.join(
-      process.cwd(),
-      outDir,
-      component.category,
-      componentName,
-    );
+    // If --dir is explicitly provided, use it directly without adding category/componentName
+    // Otherwise, use the default structure: outDir/category/componentName
+    const componentDir = options.dir
+      ? path.join(process.cwd(), outDir)
+      : path.join(process.cwd(), outDir, component.category, componentName);
 
     if ((await fs.pathExists(componentDir)) && !options.overwrite) {
       spinner.warn(
@@ -77,11 +76,34 @@ export async function add<T extends string>(
 
     const writtenFiles: string[] = [];
 
+    // Write root-level files
     for (const fileName of component.files) {
       const code = await getComponentCode(component.path, fileName);
       const filePath = path.join(componentDir, fileName);
       await fs.writeFile(filePath, code, "utf-8");
       writtenFiles.push(filePath);
+    }
+
+    // Write files from folders
+    if (component.folders && component.folders.length > 0) {
+      for (const folder of component.folders) {
+        const folderPath = path.join(componentDir, folder.name);
+        await fs.ensureDir(folderPath);
+
+        for (const fileName of folder.files) {
+          const code = await getComponentCode(
+            component.path,
+            `${folder.name}/${fileName}`,
+          );
+          const filePath = path.join(componentDir, folder.name, fileName);
+
+          // Ensure nested directories exist (for files like "header/HeaderNavBar.tsx")
+          await fs.ensureDir(path.dirname(filePath));
+
+          await fs.writeFile(filePath, code, "utf-8");
+          writtenFiles.push(filePath);
+        }
+      }
     }
 
     spinner.succeed(chalk.green(`Added ${componentName}!`));
