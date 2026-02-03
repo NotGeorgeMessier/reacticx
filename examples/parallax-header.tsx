@@ -15,7 +15,7 @@ import {
   AnimatedScrollViewTitleWrapper,
   HeaderComponentWrapper,
   HeaderNavBar,
-} from "@/components/templates/headers/parallax/index";
+} from "@/components/templates/parallax-header/parallax/index";
 import {
   PlayingChangeEventPayload,
   VideoPlayer,

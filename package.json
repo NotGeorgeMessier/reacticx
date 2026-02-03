@@ -16,7 +16,9 @@
     "version": "standard-version",
     "type-check": "tsc --noEmit",
     "docs": "typedoc",
-    "docs:deploy": "gh-pages -d docs"
+    "docs:deploy": "gh-pages -d docs",
+    "generate-registry": "bun scripts/cli/generate-registry/index.ts",
+    "deploy:wrangler": "npx tsx scripts/cli/generate-registry/index.ts && wrangler pages deploy ./src/components --project-name=reacticx-ui-components --branch=main"
   },
   "lint-staged": {
     "*.ts": [
