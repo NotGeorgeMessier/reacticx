@@ -2,53 +2,17 @@
 
 import { CheckCheck, Copy } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { type RefObject, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/lib/utils";
 import { PackageManagerTabs } from "./package-manager-tabs";
 
 const REGISTRY_URL = "https://reacticx-ui-components.pages.dev";
-
-// Helper function to copy text with Safari fallback
-const copyToClipboard = async (text: string): Promise<void> => {
-  // Try using the Clipboard API with ClipboardItem (works better in Safari)
-  if (navigator.clipboard && window.ClipboardItem) {
-    try {
-      const blob = new Blob([text], { type: "text/plain" });
-      const clipboardItem = new ClipboardItem({ "text/plain": blob });
-      await navigator.clipboard.write([clipboardItem]);
-      return;
-    } catch (e) {
-      // Fall through to other methods
-    }
-  }
-
-  // Try the standard writeText
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return;
-    } catch (e) {
-      // Fall through to fallback
-    }
-  }
-
-  // Fallback for Safari and older browsers
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.left = "-999999px";
-  textArea.style.top = "-999999px";
-  textArea.style.opacity = "0";
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    document.execCommand("copy");
-  } finally {
-    document.body.removeChild(textArea);
-  }
-};
 
 function SuccessParticles({
   buttonRef,
@@ -107,63 +71,117 @@ export default function PreviewContent({
   const [isCopied, setIsCopied] = useState(false);
   const [isTerminalCopied, setIsTerminalCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prefetchedCode, setPrefetchedCode] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
 
   const terminalButtonRef = useRef<HTMLButtonElement>(null);
   const copyButtonRef = useRef<HTMLButtonElement>(null);
 
-  const getFileName = () => {
+  const getFileName = useCallback(() => {
     const [folder, filename] = link.split("/");
     return filename ? filename : folder;
-  };
+  }, [link]);
 
-  const handleCopyClick = async () => {
-    setIsPending(true);
-    setError(null);
+  // Pre-fetch the code so it's ready when user clicks
+  const prefetchCode = useCallback(async () => {
+    if (prefetchedCode || isFetching) return;
 
+    setIsFetching(true);
     try {
-      // Fetch registry to get component info
       const registryRes = await fetch(`${REGISTRY_URL}/registry.json`);
-      if (!registryRes.ok) {
-        throw new Error("Failed to fetch registry");
-      }
+      if (!registryRes.ok) return;
 
       const registry = await registryRes.json();
       const componentName = getFileName();
       const component = registry.components[componentName];
+      if (!component) return;
 
-      if (!component) {
-        throw new Error(`Component "${componentName}" not found`);
+      const cleanPath = component.path.replace(/^src\/components\//, "");
+      const fileContents: string[] = [];
+
+      for (const file of component.files) {
+        if (file.endsWith(".tsx") || file.endsWith(".ts")) {
+          const fileUrl = `${REGISTRY_URL}/${cleanPath}/${file}`;
+          const res = await fetch(fileUrl);
+          if (!res.ok) continue;
+          const content = await res.text();
+          if (
+            content &&
+            !content.trim().startsWith("<!DOCTYPE") &&
+            !content.trim().startsWith("<html")
+          ) {
+            fileContents.push(`// ${file}\n${content}`);
+          }
+        }
       }
 
-      // Fetch all component files and combine them
-      const cleanPath = component.path.replace(/^src\/components\//, "");
-      const files = await Promise.all(
-        component.files
-          .filter(
-            (file: string) => file.endsWith(".tsx") || file.endsWith(".ts"),
-          )
-          .map(async (file: string) => {
-            const res = await fetch(`${REGISTRY_URL}/${cleanPath}/${file}`);
-            if (!res.ok) {
-              throw new Error(`Failed to fetch ${file}`);
-            }
-            const content = await res.text();
-            return `// ${file}\n${content}`;
-          }),
-      );
-
-      const combinedCode = files.join("\n\n");
-
-      // Copy to clipboard using helper with Safari fallback
-      await copyToClipboard(combinedCode);
-      setIsCopied(true);
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
+      if (fileContents.length > 0) {
+        setPrefetchedCode(fileContents.join("\n\n"));
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to copy");
-      console.error("Copy error:", err);
+      console.warn("Prefetch failed:", err);
+    } finally {
+      setIsFetching(false);
+    }
+  }, [prefetchedCode, isFetching, getFileName]);
+
+  // Prefetch on mount for better UX
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      prefetchCode();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [prefetchCode]);
+
+  const handleCopyClick = async () => {
+    setError(null);
+
+    // If we have prefetched code, copy it synchronously (works with user gesture)
+    if (prefetchedCode) {
+      const textArea = document.createElement("textarea");
+      textArea.value = prefetchedCode;
+      textArea.style.cssText =
+        "position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      let copySuccess = false;
+      try {
+        copySuccess = document.execCommand("copy");
+      } catch (e) {
+        console.warn("execCommand failed:", e);
+      }
+
+      document.body.removeChild(textArea);
+
+      if (copySuccess) {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+        return;
+      }
+
+      // Try clipboard API as fallback
+      try {
+        await navigator.clipboard.writeText(prefetchedCode);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+        return;
+      } catch (e) {
+        console.warn("Clipboard API failed:", e);
+        setError("Failed to copy - please try again");
+        return;
+      }
+    }
+
+    // If no prefetched code, fetch now and prompt to click again
+    setIsPending(true);
+    try {
+      await prefetchCode();
+      setError("Code loaded - click again to copy");
+      setTimeout(() => setError(null), 3000);
+    } catch (err) {
+      setError("Failed to load code");
     } finally {
       setIsPending(false);
     }
@@ -184,11 +202,53 @@ export default function PreviewContent({
         commandToCopy = `bunx --bun ${componentAddCommand}`;
       }
 
-      await copyToClipboard(commandToCopy);
-      setIsTerminalCopied(true);
-      setTimeout(() => {
-        setIsTerminalCopied(false);
-      }, 1000);
+      // Try multiple clipboard methods
+      let copySuccess = false;
+
+      if (navigator.clipboard && typeof ClipboardItem !== "undefined") {
+        try {
+          const blob = new Blob([commandToCopy], { type: "text/plain" });
+          const clipboardItem = new ClipboardItem({ "text/plain": blob });
+          await navigator.clipboard.write([clipboardItem]);
+          copySuccess = true;
+        } catch (e) {
+          console.warn("ClipboardItem method failed:", e);
+        }
+      }
+
+      if (!copySuccess && navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(commandToCopy);
+          copySuccess = true;
+        } catch (e) {
+          console.warn("writeText method failed:", e);
+        }
+      }
+
+      if (!copySuccess) {
+        const textArea = document.createElement("textarea");
+        textArea.value = commandToCopy;
+        textArea.style.cssText =
+          "position:fixed;left:-9999px;top:-9999px;opacity:0;";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          copySuccess = document.execCommand("copy");
+        } catch (e) {
+          console.warn("execCommand method failed:", e);
+        }
+        document.body.removeChild(textArea);
+      }
+
+      if (copySuccess) {
+        setIsTerminalCopied(true);
+        setTimeout(() => {
+          setIsTerminalCopied(false);
+        }, 1000);
+      } else {
+        throw new Error("All clipboard methods failed");
+      }
     } catch (err) {
       console.error("Terminal clipboard error:", err);
       setError("Failed to copy command");

@@ -2,16 +2,9 @@ import React from "react";
 import { View, StyleSheet, Text } from "react-native";
 import { AnimatedMeshGradient } from "../src/components/organisms/mesh-gradient";
 
-/**
- * Mesh Gradient Example
- *
- * This example demonstrates the AnimatedMeshGradient component
- * with the pink/purple/lavender color scheme matching the reference image.
- */
 export default function MeshGradientExample() {
   return (
     <View style={styles.container}>
-      {/* Full screen mesh gradient background */}
       <AnimatedMeshGradient
         speed={0.8}
         noise={0.15}
