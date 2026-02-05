@@ -43,7 +43,7 @@ const BentoGridItem = ({
       onClick={() => router.push("/why-reacticx")}
       variants={variants}
       className={cn(
-        "group border-white/10 bg-neutral-950 hover:border-white/20 relative flex h-full cursor-pointer flex-col justify-between overflow-hidden rounded-xl border px-6 pt-6 pb-10 shadow-md transition-all duration-500",
+        "group border-white/10 bg-neutral-950 hover:border-white/20 relative flex h-full cursor-pointer flex-col justify-between overflow-hidden rounded-xl border px-6 pt-6 pb-10 shadow-md transition-all duration-500 col-span-4",
         className,
       )}
     >
@@ -146,10 +146,10 @@ export default function BentoGrid1() {
             size={item.size}
             className={cn(
               item.size === "large"
-                ? "col-span-4"
+                ? "md:col-span-4"
                 : item.size === "medium"
-                  ? "col-span-3"
-                  : "col-span-2",
+                  ? "md:col-span-3"
+                  : "md:col-span-2",
               "h-full",
             )}
           />
