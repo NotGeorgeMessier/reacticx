@@ -2,6 +2,7 @@ import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import Image from "next/image";
 import HeaderProSmall from "@/components/landing/header-mobile";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
+import { Suspense } from "react";
 
 export const baseOptions = <T extends Partial<BaseLayoutProps>>(
   option?: T,
@@ -34,11 +35,13 @@ export const baseOptions = <T extends Partial<BaseLayoutProps>>(
       type: "custom",
       children: <HeaderProSmall />,
     },
-    {
-      type: "custom",
-      children: (
-        <GithubInfo owner="rit3zh" repo="reacticx" className="lg:-mx-2" />
-      ),
-    },
+    // {
+    //   type: "custom",
+    //   children: (
+    //     <Suspense fallback={<div className="h-9 w-20 animate-pulse rounded bg-muted" />}>
+    //       <GithubInfo owner="rit3zh" repo="reacticx" className="lg:-mx-2" />
+    //     </Suspense>
+    //   ),
+    // },
   ],
 });
