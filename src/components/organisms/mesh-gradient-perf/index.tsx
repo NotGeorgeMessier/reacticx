@@ -1,17 +1,28 @@
-import React, { memo, useMemo } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
-import { Canvas, Shader, Skia, Fill, vec } from "@shopify/react-native-skia";
-import {
-  useSharedValue,
+import React, { memo, useCallback, useMemo } from 'react';
+import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import { Canvas, Shader, Skia, Fill, vec } from '@shopify/react-native-skia';
+import Animated, {
+  useAnimatedStyle,
   useDerivedValue,
-  useFrameCallback,
-} from "react-native-reanimated";
-import { SHADER as MESH_GRADIENT_SHADER } from "./conf";
-import { DEFAULT_INITIAL_COLORS } from "./const";
-import type { IAnimatedMeshGradient, IMeshGradientColor } from "./types";
+  useSharedValue,
+} from 'react-native-reanimated';
+import { SHADER as MESH_GRADIENT_SHADER } from './conf';
+import { DEFAULT_INITIAL_COLORS } from './const';
+import type {
+  IAnimatedMeshGradient,
+  IMeshGradientColor,
+  IPerformance,
+} from './types';
+import { useFrameTime } from './useFrameTime';
 
-export const AnimatedMeshGradient: React.FC<IAnimatedMeshGradient> &
-  React.FunctionComponent<IAnimatedMeshGradient> = memo<IAnimatedMeshGradient>(
+const DEFAULT_PERFORMANCE: Required<IPerformance> = {
+  undersampling: 0.3,
+  fpsLock: 60,
+};
+
+const shader = Skia.RuntimeEffect.Make(MESH_GRADIENT_SHADER);
+
+export const AnimatedMeshGradientPerf: React.FC<IAnimatedMeshGradient> = memo(
   ({
     colors = DEFAULT_INITIAL_COLORS,
     speed = 1,
@@ -22,20 +33,19 @@ export const AnimatedMeshGradient: React.FC<IAnimatedMeshGradient> &
     style,
     width: paramsWidth,
     height: paramsHeight,
-  }: React.ComponentProps<typeof AnimatedMeshGradient>): React.ReactNode &
-    React.JSX.Element &
-    React.ReactElement => {
-    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-    const width = paramsWidth ?? screenWidth;
-    const height = paramsHeight ?? screenHeight;
+    performance,
+    children,
+  }) => {
+    const width = useSharedValue(paramsWidth ?? 1);
+    const height = useSharedValue(paramsHeight ?? 1);
+    const scale =
+      performance?.undersampling ?? DEFAULT_PERFORMANCE.undersampling;
 
-    const time = useSharedValue<number>(0);
-
-    useFrameCallback((frameInfo) => {
-      if (animated && frameInfo.timeSincePreviousFrame !== null) {
-        time.value += (frameInfo.timeSincePreviousFrame / 1000) * speed;
-      }
-    }, animated);
+    const time = useFrameTime({
+      fpsLock: performance?.fpsLock ?? DEFAULT_PERFORMANCE.fpsLock,
+      animated,
+      speed,
+    });
 
     const safeColors = useMemo<IMeshGradientColor[]>(() => {
       const result = [...colors];
@@ -47,13 +57,12 @@ export const AnimatedMeshGradient: React.FC<IAnimatedMeshGradient> &
       return result.slice(0, 4);
     }, [colors]);
 
-    const shader = useMemo(() => {
-      return Skia.RuntimeEffect.Make(MESH_GRADIENT_SHADER);
-    }, []);
-
     const uniforms = useDerivedValue(() => {
       return {
-        resolution: vec(width, height),
+        resolution: vec(
+          Math.round(width.value * scale),
+          Math.round(height.value * scale),
+        ),
         time: time.value,
         noise: Math.max(0, Math.min(1, noise)),
         blur: Math.max(0, Math.min(1, blur)),
@@ -65,17 +74,49 @@ export const AnimatedMeshGradient: React.FC<IAnimatedMeshGradient> &
       };
     }, [width, height, noise, blur, contrast, safeColors, time]);
 
+    const canvasWrapperStyle = useAnimatedStyle(() => ({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: Math.round(width.value * scale),
+      height: Math.round(height.value * scale),
+      transform: [{ scale: 1 / scale }],
+      transformOrigin: 'left top',
+      zIndex: -9999,
+    }));
+
+    const onLayout = useCallback(
+      (e: LayoutChangeEvent) => {
+        const w = e.nativeEvent.layout.width;
+        const h = e.nativeEvent.layout.height;
+        width.value = w < 1 ? 1 : w;
+        height.value = h < 1 ? 1 : h;
+      },
+      [width, height],
+    );
+
     if (!shader) {
-      return <View style={[styles.container, style, { width, height }]} />;
+      return (
+        <View
+          style={[
+            styles.container,
+            style,
+            { width: width.value, height: height.value },
+          ]}
+        />
+      );
     }
 
     return (
-      <View style={[styles.container, style, { width, height }]}>
-        <Canvas style={StyleSheet.absoluteFill}>
-          <Fill>
-            <Shader source={shader} uniforms={uniforms} />
-          </Fill>
-        </Canvas>
+      <View style={[styles.container, style]} onLayout={onLayout}>
+        {children}
+        <Animated.View style={canvasWrapperStyle}>
+          <Canvas style={StyleSheet.absoluteFill}>
+            <Fill>
+              <Shader source={shader} uniforms={uniforms} />
+            </Fill>
+          </Canvas>
+        </Animated.View>
       </View>
     );
   },
@@ -83,11 +124,8 @@ export const AnimatedMeshGradient: React.FC<IAnimatedMeshGradient> &
 
 const styles = StyleSheet.create({
   container: {
-    overflow: "hidden",
+    overflow: 'hidden',
   },
 });
 
-export default memo<
-  React.FC<IAnimatedMeshGradient> &
-    React.FunctionComponent<IAnimatedMeshGradient>
->(AnimatedMeshGradient);
+export default AnimatedMeshGradientPerf;
