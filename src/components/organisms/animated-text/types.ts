@@ -23,6 +23,7 @@ interface AnimationConfig {
 interface StaggeredTextProps {
   text: string;
   readonly style?: StyleProp<TextStyle>;
+  readonly capitalized?: boolean;
   readonly animationConfig?: Partial<AnimationConfig>;
   readonly enterFrom?: Partial<CharacterAnimationParams>;
   readonly enterTo?: Partial<CharacterAnimationParams>;
