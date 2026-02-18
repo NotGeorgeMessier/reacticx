@@ -190,6 +190,7 @@ export const StaggeredText: React.FC<StaggeredTextProps> =
     ({
       text,
       style,
+      capitalized,
       animationConfig,
       enterFrom,
       enterTo,
@@ -241,7 +242,11 @@ export const StaggeredText: React.FC<StaggeredTextProps> =
               <Character
                 key={`${char}-${index}`}
                 char={char}
-                style={style}
+                style={
+                  capitalized && index === 0
+                    ? [style, { textTransform: 'uppercase' }]
+                    : style
+                }
                 index={index}
                 totalChars={characters.length}
                 animationConfig={mergedAnimationConfig}
